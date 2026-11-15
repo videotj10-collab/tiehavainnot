@@ -16,9 +16,11 @@
   const OSM_MAX_AGE = 24 * 3600 * 1000;
   const POLL_MS = 30000;
   const OVERPASS_URLS = [
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
     'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.private.coffee/api/interpreter',
   ];
+  const SNAPSHOT_URL = 'data/osm.json'; // GitHub Actions päivittää tämän päivittäin
   const OVERPASS_QUERY = `[out:json][timeout:90];
 area["ISO3166-1"="FI"][admin_level=2]->.fi;
 (
@@ -107,23 +109,31 @@ out center tags;`;
     }
     if (cached) { osmPoints = cached.points; renderOsm(); }
     $('status').textContent = 'Ladataan kameroita ja asemia…';
-    for (const url of OVERPASS_URLS) {
+    const parse = (json) => json.elements.map((el) => {
+      const lat = el.lat ?? el.center?.lat, lon = el.lon ?? el.center?.lon;
+      const kind = el.tags?.highway === 'speed_camera' ? 'camera' : 'e85';
+      return { id: `osm-${el.type}-${el.id}`, kind, lat, lon, tags: el.tags || {} };
+    }).filter((p) => p.lat != null);
+    const sources = [
+      // 1) Repoon tallennettu, päivittäin päivittyvä kopio (nopea ja luotettava)
+      () => fetch(SNAPSHOT_URL, { cache: 'no-cache' }),
+      // 2) Overpass-palvelimet suoraan
+      ...OVERPASS_URLS.map((url) => () => fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(OVERPASS_QUERY),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: AbortSignal.timeout(45000) })),
+    ];
+    for (const src of sources) {
       try {
-        const res = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(OVERPASS_QUERY),
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+        const res = await src();
         if (!res.ok) throw new Error(res.status);
         const json = await res.json();
-        const points = json.elements.map((el) => {
-          const lat = el.lat ?? el.center?.lat, lon = el.lon ?? el.center?.lon;
-          const kind = el.tags?.highway === 'speed_camera' ? 'camera' : 'e85';
-          return { id: `osm-${el.type}-${el.id}`, kind, lat, lon, tags: el.tags || {} };
-        }).filter((p) => p.lat != null);
+        const points = parse(json);
+        if (!points.length) throw new Error('tyhjä');
         const data = { t: Date.now(), points };
         store.set(OSM_CACHE_KEY, data);
         osmPoints = points; renderOsm(); updateOsmInfo(data); checkWarnings();
         toast(`Ladattu ${points.filter(p => p.kind === 'camera').length} kameraa ja ${points.filter(p => p.kind === 'e85').length} E85-asemaa`);
         return;
-      } catch (e) { console.warn('Overpass epäonnistui', url, e); }
+      } catch (e) { console.warn('Lähde epäonnistui', e); }
     }
     toast('Kameratietojen lataus epäonnistui – yritä myöhemmin uudelleen', 4000);
   }
