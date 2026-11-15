@@ -17,13 +17,18 @@ jobs:
         run: |
           mkdir -p data
           QUERY='[out:json][timeout:90];area["ISO3166-1"="FI"][admin_level=2]->.fi;(node["highway"="speed_camera"](area.fi);nwr["amenity"="fuel"]["fuel:e85"="yes"](area.fi););out center tags;'
+          DONE=0
+          for ROUND in 1 2 3 4 5; do
           for URL in https://overpass-api.de/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter https://overpass.private.coffee/api/interpreter; do
             if curl -sS --max-time 120 -X POST --data-urlencode "data=$QUERY" "$URL" -o tmp.json \
                && python3 -c "import json,sys; d=json.load(open('tmp.json')); sys.exit(0 if len(d['elements'])>100 else 1)"; then
               python3 -c "import json; d=json.load(open('tmp.json')); json.dump({'osm3s':d.get('osm3s',{}),'elements':d['elements']}, open('data/osm.json','w'), ensure_ascii=False, separators=(',',':'))"
-              echo "OK: $URL"; break
+              echo "OK: $URL"; DONE=1; break
             fi
-            echo "Epäonnistui: $URL"
+            echo "Epäonnistui: $URL (kierros $ROUND)"
+          done
+          [ $DONE = 1 ] && break
+          sleep 90
           done
           rm -f tmp.json
       - name: Tallenna muutokset
