@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111418">
+<title>Tiehavainnot</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map"></div>
+
+<!-- Yläpalkki: nopeus + tila -->
+<div id="topbar">
+  <div id="speed"><span id="speedVal">–</span><small>km/h</small></div>
+  <div id="status">Haetaan sijaintia…</div>
+  <button id="btnSettings" class="icon-btn" aria-label="Asetukset">⚙️</button>
+</div>
+
+<!-- Varoitusbanneri -->
+<div id="alert" class="hidden"><span id="alertIcon"></span><div><b id="alertTitle"></b><div id="alertDist"></div></div></div>
+
+<!-- Karttanapit -->
+<div id="mapButtons">
+  <button id="btnFollow" class="icon-btn active" aria-label="Seuraa sijaintia">🎯</button>
+  <button id="btnLayers" class="icon-btn" aria-label="Tasot">🗂️</button>
+</div>
+
+<!-- Tasopaneeli -->
+<div id="layersPanel" class="panel hidden">
+  <label><input type="checkbox" data-layer="camera" checked> 📷 Kiinteät nopeuskamerat</label>
+  <label><input type="checkbox" data-layer="e85" checked> ⛽ E85-asemat</label>
+  <label><input type="checkbox" data-layer="reports" checked> 🚓 Käyttäjien ilmoitukset</label>
+  <label><input type="checkbox" id="chkSound" checked> 🔊 Äänivaroitus</label>
+</div>
+
+<!-- Ilmoitusnapit -->
+<div id="reportBar">
+  <button class="rep" data-type="police">🚓<span>Poliisi</span></button>
+  <button class="rep" data-type="mobilecam">📸<span>Peltipoliisiauto</span></button>
+  <button class="rep" data-type="hazard">⚠️<span>Vaara</span></button>
+  <button class="rep" data-type="e85">⛽<span>E85-asema</span></button>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="hidden"></div>
+
+<!-- Asetukset -->
+<div id="settings" class="sheet hidden">
+  <h2>Asetukset</h2>
+  <label>Jaetun tietokannan osoite (Firebase Realtime Database)
+    <input id="dbUrl" type="url" placeholder="https://oma-projekti-default-rtdb.europe-west1.firebasedatabase.app">
+  </label>
+  <p class="hint">Ilman osoitetta ilmoitukset tallentuvat vain tähän puhelimeen. Ohjeet README-tiedostossa.</p>
+  <label>Varoitusetäisyys, kamerat (m)
+    <input id="warnCam" type="number" min="100" max="2000" step="50" value="600">
+  </label>
+  <label>Varoitusetäisyys, ilmoitukset (m)
+    <input id="warnRep" type="number" min="100" max="3000" step="50" value="800">
+  </label>
+  <div class="row">
+    <button id="btnRefreshOsm">Päivitä kamerat & asemat</button>
+    <button id="btnCloseSettings" class="primary">Tallenna</button>
+  </div>
+  <p class="hint" id="osmInfo"></p>
+  <p class="hint">⚠️ Älä näppäile ajaessa – pidä puhelin telineessä ja anna kyytiläisen ilmoittaa. Sovellus käyttää vain karttatietoa ja käyttäjien ilmoituksia, ei tutkanpaljastusta. Karttadata © OpenStreetMap-tekijät (ODbL).</p>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
