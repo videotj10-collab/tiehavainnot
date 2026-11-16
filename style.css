@@ -92,6 +92,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .mk-me svg { width: 22px; height: 22px; transition: transform .4s; }
 
 /* Leaflet-tummennus */
+.leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(.85) brightness(.85) contrast(.9); }
 .leaflet-container { background: var(--bg); font-family: inherit; }
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
 .leaflet-popup-content { font-size: 14px; line-height: 1.5; }

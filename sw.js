@@ -1,5 +1,5 @@
 // Välimuisti sovelluksen tiedostoille, jotta äppi aukeaa nopeasti myös heikolla yhteydellä
-const CACHE = 'tiehavainnot-v2';
+const CACHE = 'tiehavainnot-v3';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json',
   'icons/icon-192.png', 'icons/icon-512.png',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -18,7 +18,7 @@ self.addEventListener('fetch', (e) => {
   // Ilmoitukset ja Overpass aina verkosta
   if (url.hostname.includes('firebase') || url.hostname.includes('overpass')) return;
   // Karttaruudut: välimuisti ensin, sitten verkko
-  if (url.hostname.endsWith('basemaps.cartocdn.com')) {
+  if (url.hostname.endsWith('tile.openstreetmap.org')) {
     e.respondWith(caches.open('tiles-v1').then(async (c) => {
       const hit = await c.match(e.request);
       if (hit) return hit;

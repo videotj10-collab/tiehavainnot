@@ -74,8 +74,9 @@ out center tags;`;
 
   // ---------- Kartta ----------
   const map = L.map('map', { zoomControl: false, attributionControl: true }).setView([62.5, 25.5], 6);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap © CARTO',
+  // OSM-karttaruudut, tummennetaan CSS-suodattimella (style.css: .leaflet-tile-pane)
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '© OpenStreetMap',
   }).addTo(map);
 
   const layers = {
