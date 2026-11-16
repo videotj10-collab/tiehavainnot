@@ -3,47 +3,47 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#111418">
+<meta name="theme-color" content="#0B0B0C">
 <title>Tiehavainnot</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="map"></div>
 
-<!-- Yläpalkki: nopeus + tila -->
+<!-- Yläosa: nopeus + tila + napit -->
 <div id="topbar">
-  <div id="speed"><span id="speedVal">–</span><small>km/h</small></div>
-  <div id="status">Haetaan sijaintia…</div>
-  <button id="btnSettings" class="icon-btn" aria-label="Asetukset">⚙️</button>
+  <div id="speed"><span id="speedVal">–</span><small>KM/H</small></div>
+  <div id="meta"><div class="t">TIEHAVAINNOT</div><div id="status">Haetaan sijaintia…</div></div>
+  <div id="mapButtons">
+    <button id="btnSettings" class="icon-btn" aria-label="Asetukset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <button id="btnFollow" class="icon-btn active" aria-label="Seuraa sijaintia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+    <button id="btnLayers" class="icon-btn" aria-label="Tasot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/></svg></button>
+  </div>
 </div>
 
 <!-- Varoitusbanneri -->
-<div id="alert" class="hidden"><span id="alertIcon"></span><div><b id="alertTitle"></b><div id="alertDist"></div></div></div>
-
-<!-- Karttanapit -->
-<div id="mapButtons">
-  <button id="btnFollow" class="icon-btn active" aria-label="Seuraa sijaintia">🎯</button>
-  <button id="btnLayers" class="icon-btn" aria-label="Tasot">🗂️</button>
-</div>
+<div id="alert" class="hidden"><svg id="alertIcon" viewBox="0 0 24 24"></svg><div><b id="alertTitle"></b><div id="alertDist"></div></div></div>
 
 <!-- Tasopaneeli -->
 <div id="layersPanel" class="panel hidden">
-  <label><input type="checkbox" data-layer="camera" checked> 📷 Kiinteät nopeuskamerat</label>
-  <label><input type="checkbox" data-layer="e85" checked> ⛽ E85-asemat</label>
-  <label><input type="checkbox" data-layer="reports" checked> 🚓 Käyttäjien ilmoitukset</label>
-  <label><input type="checkbox" id="chkSound" checked> 🔊 Äänivaroitus</label>
+  <label>Nopeuskamerat <input type="checkbox" data-layer="camera" checked></label>
+  <label>E85-asemat <input type="checkbox" data-layer="e85" checked></label>
+  <label>Ilmoitukset <input type="checkbox" data-layer="reports" checked></label>
+  <label>Äänivaroitus <input type="checkbox" id="chkSound" checked></label>
 </div>
 
 <!-- Ilmoitusnapit -->
 <div id="reportBar">
-  <button class="rep" data-type="police">🚓<span>Poliisi</span></button>
-  <button class="rep" data-type="mobilecam">📸<span>Peltipoliisiauto</span></button>
-  <button class="rep" data-type="hazard">⚠️<span>Vaara</span></button>
-  <button class="rep" data-type="e85">⛽<span>E85-asema</span></button>
+  <button class="rep" data-type="police"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3z"/></svg><span>Poliisi</span></button>
+  <button class="rep" data-type="mobilecam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 7l1.5-2h5L16 7"/></svg><span>Peltiauto</span></button>
+  <button class="rep" data-type="hazard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg><span>Vaara</span></button>
+  <button class="rep" data-type="e85"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M4 10h10"/><path d="M14 8h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V9l-3-3"/></svg><span>E85</span></button>
 </div>
 
 <!-- Toast -->
@@ -51,11 +51,12 @@
 
 <!-- Asetukset -->
 <div id="settings" class="sheet hidden">
+  <div class="grab"></div>
   <h2>Asetukset</h2>
-  <label>Jaetun tietokannan osoite (Firebase Realtime Database)
-    <input id="dbUrl" type="url" placeholder="https://oma-projekti-default-rtdb.europe-west1.firebasedatabase.app">
+  <label>Jaetun tietokannan osoite (Firebase)
+    <input id="dbUrl" type="url" placeholder="https://projekti-default-rtdb.europe-west1.firebasedatabase.app">
   </label>
-  <p class="hint">Ilman osoitetta ilmoitukset tallentuvat vain tähän puhelimeen. Ohjeet README-tiedostossa.</p>
+  <p class="hint">Ilman osoitetta ilmoitukset tallentuvat vain tähän puhelimeen.</p>
   <label>Varoitusetäisyys, kamerat (m)
     <input id="warnCam" type="number" min="100" max="2000" step="50" value="600">
   </label>
@@ -63,11 +64,11 @@
     <input id="warnRep" type="number" min="100" max="3000" step="50" value="800">
   </label>
   <div class="row">
-    <button id="btnRefreshOsm">Päivitä kamerat & asemat</button>
-    <button id="btnCloseSettings" class="primary">Tallenna</button>
+    <button id="btnRefreshOsm">Päivitä kamerat</button>
+    <button id="btnCloseSettings" class="primary">Valmis</button>
   </div>
   <p class="hint" id="osmInfo"></p>
-  <p class="hint">⚠️ Älä näppäile ajaessa – pidä puhelin telineessä ja anna kyytiläisen ilmoittaa. Sovellus käyttää vain karttatietoa ja käyttäjien ilmoituksia, ei tutkanpaljastusta. Karttadata © OpenStreetMap-tekijät (ODbL).</p>
+  <p class="hint">Älä käytä puhelinta ajaessa: pidä se telineessä ja anna kyytiläisen ilmoittaa. Sovellus käyttää vain karttatietoa ja käyttäjien ilmoituksia, ei tutkanpaljastusta. Karttadata © OpenStreetMap-tekijät (ODbL), karttapohja © CARTO.</p>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

@@ -7,10 +7,10 @@
 
   // ---------- Asetukset ----------
   const TYPES = {
-    police:    { icon: '🚓', name: 'Poliisi',          ttlMin: 120,  cls: '' },
-    mobilecam: { icon: '📸', name: 'Peltipoliisiauto', ttlMin: 180,  cls: 'cam' },
-    hazard:    { icon: '⚠️', name: 'Vaara tiellä',     ttlMin: 120,  cls: '' },
-    e85:       { icon: '⛽', name: 'E85-asema',         ttlMin: 0,    cls: 'e85' }, // 0 = pysyvä
+    police:    { icon: 'P', name: 'Poliisi',          ttlMin: 120,  cls: '' },
+    mobilecam: { icon: 'K', name: 'Peltipoliisiauto', ttlMin: 180,  cls: '' },
+    hazard:    { icon: '!', name: 'Vaara tiellä',     ttlMin: 120,  cls: '' },
+    e85:       { icon: 'E', name: 'E85-asema',         ttlMin: 0,    cls: 'e85' }, // 0 = pysyvä
   };
   const OSM_CACHE_KEY = 'th_osm_v1';
   const OSM_MAX_AGE = 24 * 3600 * 1000;
@@ -74,8 +74,8 @@ out center tags;`;
 
   // ---------- Kartta ----------
   const map = L.map('map', { zoomControl: false, attributionControl: true }).setView([62.5, 25.5], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, attribution: '© OpenStreetMap',
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap © CARTO',
   }).addTo(map);
 
   const layers = {
@@ -87,9 +87,17 @@ out center tags;`;
   const e85User = L.layerGroup().addTo(layers.e85);  // käyttäjien ilmoittamat asemat
   Object.entries(layers).forEach(([k, lg]) => { if (settings.layers[k]) lg.addTo(map); });
 
-  const emojiIcon = (e) => L.divIcon({ className: 'mk', html: e, iconSize: [28, 28], iconAnchor: [14, 14] });
+  const camIcon = L.divIcon({ className: '', html: '<div class="mk-cam"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
+  const e85Icon = L.divIcon({ className: '', html: '<div class="mk-e85"></div>', iconSize: [12, 12], iconAnchor: [6, 6] });
+  const repIcon = (t) => L.divIcon({ className: '', html: `<div class="mk-rep ${t === 'e85' ? 'light' : ''}">${TYPES[t].icon}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] });
+  const ALERT_SVG = {
+    cam: '<g fill="none" stroke="#fff" stroke-width="1.6"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/></g>',
+    police: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3z" fill="none" stroke="#fff" stroke-width="1.6"/>',
+    mobilecam: '<g fill="none" stroke="#fff" stroke-width="1.6"><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="12" cy="13" r="3"/></g>',
+    hazard: '<g fill="none" stroke="#fff" stroke-width="1.6"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></g>',
+  };
   const meMarker = L.marker([0, 0], {
-    icon: L.divIcon({ className: '', html: '<div class="mk-me"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }),
+    icon: L.divIcon({ className: '', html: '<div class="mk-me"><svg viewBox="0 0 24 24"><path d="M12 2 19 21 12 17 5 21z" fill="#fff"/></svg></div>', iconSize: [40, 40], iconAnchor: [20, 20] }),
     zIndexOffset: 1000,
   });
 
@@ -148,11 +156,11 @@ out center tags;`;
       const t = p.tags;
       let html;
       if (p.kind === 'camera') {
-        html = `<b>📷 Nopeuskamera</b>${t.maxspeed ? `<br>Rajoitus: ${esc(t.maxspeed)} km/h` : ''}${t.direction ? `<br>Suunta: ${esc(t.direction)}` : ''}`;
+        html = `<b>Nopeuskamera</b>${t.maxspeed ? `<br>Rajoitus: ${esc(t.maxspeed)} km/h` : ''}${t.direction ? `<br>Suunta: ${esc(t.direction)}` : ''}`;
       } else {
-        html = `<b>⛽ ${esc(t.name || t.brand || 'E85-asema')}</b>${t['addr:street'] ? `<br>${esc(t['addr:street'])} ${esc(t['addr:housenumber'] || '')}` : ''}${t.opening_hours ? `<br>Auki: ${esc(t.opening_hours)}` : ''}<br><small>Lähde: OpenStreetMap</small>`;
+        html = `<b>${esc(t.name || t.brand || 'E85-asema')}</b>${t['addr:street'] ? `<br>${esc(t['addr:street'])} ${esc(t['addr:housenumber'] || '')}` : ''}${t.opening_hours ? `<br>Auki: ${esc(t.opening_hours)}` : ''}<br><small>Lähde: OpenStreetMap</small>`;
       }
-      L.marker([p.lat, p.lon], { icon: emojiIcon(p.kind === 'camera' ? '📷' : '⛽') })
+      L.marker([p.lat, p.lon], { icon: p.kind === 'camera' ? camIcon : e85Icon })
         .bindPopup(html).addTo(p.kind === 'camera' ? layers.camera : e85Osm);
     }
   }
@@ -199,14 +207,14 @@ out center tags;`;
       const list = store.get(LOCAL_KEY, []);
       list.push({ id: 'loc-' + r.t, ...r }); store.set(LOCAL_KEY, list);
       await fetchReports();
-      toast(`${TYPES[type].icon} Ilmoitettu (vain tähän puhelimeen)`);
+      toast(`${TYPES[type].name} ilmoitettu (vain tähän puhelimeen)`);
       return;
     }
     try {
       const res = await fetch(`${dbBase()}/reports.json`, { method: 'POST', body: JSON.stringify(r) });
       if (!res.ok) throw new Error(res.status);
       await fetchReports();
-      toast(`${TYPES[type].icon} ${TYPES[type].name} ilmoitettu – kiitos!`);
+      toast(`${TYPES[type].name} ilmoitettu – kiitos!`);
     } catch (e) {
       toast('Ilmoituksen lähetys epäonnistui', 3500);
     }
@@ -229,11 +237,11 @@ out center tags;`;
     for (const r of reports) {
       const ty = TYPES[r.type];
       const btn = ty.ttlMin === 0 ? 'Poista asema' : 'Ei enää paikalla';
-      const html = `<b>${ty.icon} ${ty.name}</b><br>${fmtAge(r.t)}${me ? `<br>${fmtDist(dist(me, r))} päässä` : ''}
+      const html = `<b>${ty.name}</b><br>${fmtAge(r.t)}${me ? `<br>${fmtDist(dist(me, r))} päässä` : ''}
         <br><button onclick="__thRemove('${esc(r.id)}')">${btn}</button>`;
       // E85-käyttäjäilmoitukset näytetään E85-tasolla
       const target = r.type === 'e85' ? e85User : layers.reports;
-      L.marker([r.lat, r.lon], { icon: emojiIcon(ty.icon) }).bindPopup(html).addTo(target);
+      L.marker([r.lat, r.lon], { icon: repIcon(r.type) }).bindPopup(html).addTo(target);
     }
   }
 
@@ -264,9 +272,9 @@ out center tags;`;
     if (!me) return;
     const candidates = [];
     if (settings.layers.camera) osmPoints.filter((p) => p.kind === 'camera')
-      .forEach((p) => candidates.push({ id: p.id, lat: p.lat, lon: p.lon, icon: '📷', title: 'Nopeuskamera', cls: 'cam', range: settings.warnCam, extra: p.tags.maxspeed ? ` · ${p.tags.maxspeed} km/h` : '' }));
+      .forEach((p) => candidates.push({ id: p.id, lat: p.lat, lon: p.lon, icon: 'cam', title: 'Nopeuskamera', cls: 'cam', range: settings.warnCam, limit: parseInt(p.tags.maxspeed) || 0, extra: p.tags.maxspeed ? ` · ${p.tags.maxspeed} km/h` : '' }));
     if (settings.layers.reports) reports.filter((r) => r.type !== 'e85')
-      .forEach((r) => candidates.push({ id: r.id, lat: r.lat, lon: r.lon, icon: TYPES[r.type].icon, title: TYPES[r.type].name, cls: TYPES[r.type].cls, range: settings.warnRep, extra: ` · ${fmtAge(r.t)}` }));
+      .forEach((r) => candidates.push({ id: r.id, lat: r.lat, lon: r.lon, icon: r.type, title: TYPES[r.type].name, cls: TYPES[r.type].cls, range: settings.warnRep, extra: ` · ${fmtAge(r.t)}` }));
 
     const moving = me.speed != null && me.speed > 8 && me.heading != null;
     let best = null;
@@ -279,9 +287,10 @@ out center tags;`;
       if (!best || d < best.d) best = { ...c, d };
     }
     const el = $('alert');
-    if (!best) { el.classList.add('hidden'); return; }
+    if (!best) { el.classList.add('hidden'); $('speed').classList.remove('over'); return; }
     el.className = best.cls || '';
-    $('alertIcon').textContent = best.icon;
+    $('alertIcon').innerHTML = ALERT_SVG[best.icon] || '';
+    $('speed').classList.toggle('over', !!best.limit && me.speed != null && me.speed > best.limit + 3);
     $('alertTitle').textContent = best.title;
     $('alertDist').textContent = `${fmtDist(best.d)} edessä${best.extra}`;
     if (!alerted.has(best.id)) {
@@ -309,6 +318,8 @@ out center tags;`;
     $('speedVal').textContent = speed != null ? Math.round(speed) : '–';
     $('status').textContent = c.accuracy > 100 ? `GPS epätarkka (±${Math.round(c.accuracy)} m)` : 'Sijainti OK';
     meMarker.setLatLng([me.lat, me.lon]);
+    const arrow = meMarker.getElement()?.querySelector('svg');
+    if (arrow) arrow.style.transform = `rotate(${me.heading || 0}deg)`;
     if (!map.hasLayer(meMarker)) { meMarker.addTo(map); map.setView([me.lat, me.lon], 15); }
     else if (follow) map.panTo([me.lat, me.lon], { animate: true });
     checkWarnings();
