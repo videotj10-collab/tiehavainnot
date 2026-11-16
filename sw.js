@@ -1,6 +1,6 @@
 // Välimuisti sovelluksen tiedostoille, jotta äppi aukeaa nopeasti myös heikolla yhteydellä
 const CACHE = 'tiehavainnot-v3';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json',
+const SHELL = ['./', 'index.html', 'style.css?v=3', 'app.js?v=3', 'manifest.json',
   'icons/icon-192.png', 'icons/icon-512.png',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'];
